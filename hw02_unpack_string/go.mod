@@ -1,6 +1,6 @@
-module github.com/fixme_my_friend/hw02_unpack_string
+module github.com/Chistilin/OtusGolang/hw02_hello_otus
 
-go 1.22
+go 1.22.8
 
 require github.com/stretchr/testify v1.7.0
 
