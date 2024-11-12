@@ -12,7 +12,7 @@ var ErrInvalidString = errors.New("invalid string")
 func Unpack(s string) (string, error) {
 	str := []rune(s)
 	var result strings.Builder
-	countStr := len(str) //Размер строки
+	countStr := len(str) // Количество символов
 	for i, item := range str {
 		if unicode.IsDigit(item) && i == 0 {
 			return "", ErrInvalidString
@@ -20,7 +20,7 @@ func Unpack(s string) (string, error) {
 		if unicode.IsDigit(item) && unicode.IsDigit(str[i-1]) {
 			return "", ErrInvalidString
 		}
-		//Проверяем следующий символ
+		// Проверяем следующий символ
 		if countStr > i+1 && unicode.IsDigit(str[i+1]) {
 			// Преобразуем символ в число
 			strNextCount, err := strconv.Atoi(string(str[i+1]))
