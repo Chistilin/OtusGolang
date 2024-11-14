@@ -38,11 +38,11 @@ func Unpack(s string) (string, error) {
 			if err != nil {
 				return "", err
 			}
-
-			// Добавляем символ в builder count раз
-			for j := 1; j < count; j++ {
-				result.WriteByte(s[i-1])
+			if count == 0 {
+				continue
 			}
+			// Добавляем символ в builder count раз
+			result.WriteString(strings.Repeat(string(str[i-1]), count-1))
 			continue
 		}
 		// Добавляем текущий символ в builder
