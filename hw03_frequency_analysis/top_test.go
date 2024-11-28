@@ -3,7 +3,7 @@ package hw03frequencyanalysis
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require" //nolint:all
 )
 
 // Change to true if needed.
@@ -48,6 +48,18 @@ func TestTop10(t *testing.T) {
 		require.Len(t, Top10(""), 0)
 	})
 
+	t.Run("positive test", func(t *testing.T) {
+		require.Len(t, Top10("\n\n"), 0)
+	})
+
+	t.Run("positive test", func(t *testing.T) {
+		expected := []string{
+			"нога",
+			"ноги",
+			"ногу",
+		}
+		require.Equal(t, expected, Top10("нога ногу ноги"))
+	})
 	t.Run("positive test", func(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			expected := []string{
