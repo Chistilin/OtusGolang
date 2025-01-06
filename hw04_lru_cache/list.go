@@ -54,22 +54,24 @@ func listIsZero(l *list, newItem *ListItem) {
 }
 
 func (l *list) Remove(i *ListItem) {
-	if l.len == 0 {
+	if i == nil || l.Len() == 0 {
 		return
 	}
-	if i == l.front && i == l.back {
-		l.front = nil
-		l.back = nil
-	} else if i == l.front {
-		l.front = i.Next
-		l.front.Prev = nil
-	} else if i == l.back {
-		l.back = i.Prev
-		l.back.Next = nil
-	} else {
+
+	if i.Prev != nil {
 		i.Prev.Next = i.Next
+	}
+	if i.Next != nil {
 		i.Next.Prev = i.Prev
 	}
+
+	if i == l.front {
+		l.front = i.Next
+	}
+	if i == l.back {
+		l.back = i.Prev
+	}
+
 	l.len--
 }
 
