@@ -48,4 +48,18 @@ func TestList(t *testing.T) {
 		}
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
+
+	t.Run("some operations move to front", func(t *testing.T) {
+		n := 20
+		l := NewList()
+		l.PushBack(10)
+		l.PushBack(20)
+
+		for i := 0; i < n; i++ {
+			l.MoveToFront(l.Back())
+			l.MoveToFront(l.Back())
+		}
+
+		require.Equal(t, 2, l.Len())
+	})
 }
