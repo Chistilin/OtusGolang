@@ -1,6 +1,7 @@
 package hw05parallelexecution
 
 import (
+	"context"
 	"errors"
 )
 
@@ -16,6 +17,6 @@ func Run(tasks []Task, n, m int) error {
 	}
 
 	workerPool := newPool(tasks, n, int64(m))
-
-	return workerPool.run()
+	ctx := context.Background()
+	return workerPool.run(ctx)
 }

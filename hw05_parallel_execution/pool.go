@@ -1,11 +1,10 @@
 package hw05parallelexecution
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 )
-
-const chanSize = 1000
 
 type limiter struct {
 	count int64
@@ -38,25 +37,38 @@ func newPool(tasks []Task, concurrency int, maxErrorCount int64) *pool {
 	return &pool{
 		tasks:       tasks,
 		concurrency: concurrency,
-		collector:   make(chan Task, chanSize),
+		collector:   make(chan Task, len(tasks)),
 		limiter:     newLimiter(maxErrorCount),
 	}
 }
 
-func (p *pool) run() error {
+func (p *pool) run(ctx context.Context) error {
 	// Run workers
 	for i := 0; i < p.concurrency; i++ {
 		w := newWorker(i, p.collector)
 		w.Start(&p.wg, p.limiter)
 	}
 
-	// Processing tasks
-	for _, task := range p.tasks {
-		p.collector <- task
-	}
-	close(p.collector)
+	// Канал для сигнализации о завершении
+	done := make(chan struct{})
+
+	// Отправка задач в отдельной горутине
+	go func() {
+		defer close(p.collector)
+		for _, task := range p.tasks {
+			select {
+			case <-ctx.Done():
+				return
+			case <-done:
+				return
+			case p.collector <- task:
+			}
+		}
+	}()
 
 	p.wg.Wait()
+
+	close(done)
 
 	if p.limiter.isLimitExceeded() {
 		return ErrErrorsLimitExceeded
