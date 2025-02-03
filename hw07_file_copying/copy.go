@@ -24,7 +24,18 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err != nil {
 		panic(err)
 	}
-
+	//buf := make([]byte, offset) // подготавливаем буфер нужного размера
+	for offset < 0 {
+		//read, err := fromFile.Read(buf[offset:])
+		//offset += read
+		if err == io.EOF {
+			// что если не дочитали ?
+			break
+		}
+		/*		if err != nil {
+				log.Panicf("failed to read: %v", err)
+			}*/
+	}
 	toFile, err := os.Create(toPath)
 	if err != nil {
 		panic(ErrFileOpen)
@@ -45,5 +56,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err != nil {
 		panic(ErrCopyFile)
 	}
+
 	return nil
 }
+
+/*func validateFile(file string) {
+}*/
