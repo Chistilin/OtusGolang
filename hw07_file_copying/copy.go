@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"io"
+	"log"
 	"os"
 )
 
@@ -22,7 +23,11 @@ var (
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	fromFile, err := os.OpenFile(fromPath, os.O_RDONLY, 0666)
 	if err != nil {
-		panic(err)
+		if os.IsNotExist(err) {
+			log.Panicf("File not found: %s", fromFile)
+		}
+
+		log.Panicf("failed %s to read: %v", fromFile, err)
 	}
 	//buf := make([]byte, offset) // подготавливаем буфер нужного размера
 	for offset < 0 {
