@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"github.com/schollz/progressbar/v3"
 	"io"
 	"log"
 	"os"
@@ -58,7 +59,10 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err != nil {
 		log.Panicf("error copy file : %v, %s", fromPath, err)
 	}
-
+	bar := progressbar.DefaultBytes(
+		offset,
+		"downloading",
+	)
 	return nil
 }
 
