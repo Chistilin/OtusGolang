@@ -18,30 +18,30 @@ var (
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
-	fromFile, err := os.OpenFile(fromPath, os.O_RDONLY, 0666)
+	//Валидируем оба пути
+	validate(fromPath, toPath, offset, limit)
+	//Открываем файл
+	fromFile, err := os.OpenFile(fromPath, os.O_RDONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		if os.IsNotExist(err) {
-			log.Panicf("File not found: %s", fromFile)
-		}
-
 		log.Panicf("failed %s to read: %v", fromFile, err)
 	}
-	//buf := make([]byte, offset) // подготавливаем буфер нужного размера
-	for offset < 0 {
-		//read, err := fromFile.Read(buf[offset:])
-		//offset += read
-		if err == io.EOF {
-			break
-		}
-		/*		if err != nil {
-				log.Panicf("failed to read: %v", err)
-			}*/
+	//Проверяем что есть такое смещение
+	if _, err = fromFile.Seek(offset, 0); err != nil {
+		log.Panic(ErrOffsetExceedsFileSize)
 	}
+	//Создаем файл куда копировать
 	toFile, err := os.Create(toPath)
 	if err != nil {
 		log.Panicf("error %s file create : %v", toPath, err)
 	}
-
+	toFileInfo, err := os.Stat(toPath)
+	if err != nil {
+		log.Panicf("failed about info To file: %s", toPath)
+	}
+	if toFileInfo.IsDir() {
+		log.Panic(ErrUnsupportedFile)
+	}
+	//Закрываем всегда при выходе
 	defer func(fromFile *os.File, toFile *os.File) {
 		errFrom := fromFile.Close()
 		if errFrom != nil {
@@ -53,13 +53,30 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		}
 	}(fromFile, toFile)
 
-	_, err = io.CopyN(fromFile, toFile, limit)
+	//Копируем
+	_, err = io.CopyN(toFile, fromFile, offset)
 	if err != nil {
-		log.Panicf("error copy file : %v", fromPath)
+		log.Panicf("error copy file : %v, %s", fromPath, err)
 	}
 
 	return nil
 }
 
-/*func validateFile(file string) {
-}*/
+func validate(fromPath, toPath string, offset, limit int64) {
+	if offset < 0 {
+		log.Panic("Offset < 0")
+	}
+	if limit < 0 {
+		log.Panic("Limit < 0")
+	}
+	fromFileInfo, err := os.Stat(fromPath)
+	if err != nil {
+		log.Panicf("failed about info From file: %s", fromPath)
+	}
+	if fromFileInfo.IsDir() {
+		log.Panicf("File is dir: %s", fromPath)
+	}
+	if fromFileInfo.Size() < offset {
+		log.Panicf("File from %s size %s < offset", fromFileInfo.Size(), fromPath)
+	}
+}
