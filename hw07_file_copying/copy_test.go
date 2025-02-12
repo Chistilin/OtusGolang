@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require" //nolint:all
 )
 
 func TestCopy(t *testing.T) {
@@ -30,7 +31,6 @@ func TestCopy(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(fmt.Sprintf("Offset: %v, limit %v %s", tc.offset, tc.limit, tc.text), func(t *testing.T) {
 			err := Copy(input, destination.Name(), tc.offset, tc.limit)
 
