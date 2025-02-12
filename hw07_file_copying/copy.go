@@ -64,13 +64,16 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	bar := pb.Full.Start64(limit)
 	barReader := bar.NewProxyReader(buf)
 	_, err = io.CopyN(toFile, barReader, limit)
+	if err != nil {
+		return fmt.Errorf("failed about info To file: %s", toPath)
+	}
 	bar.Finish()
 	return nil
 }
 
 func validate(fromPath string, offset, limit int64) (os.FileInfo, error) {
 	if offset < 0 {
-		return nil, ErrOffsetExceedsFileSize
+		return nil, ErrUnsupportedFile
 	}
 	if limit < 0 {
 		return nil, fmt.Errorf("Limit < 0")
