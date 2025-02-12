@@ -19,7 +19,7 @@ func ExecutePipeline(in, done In, stages ...Stage) Out {
 		out = stage(processStage(out, done))
 	}
 
-	return out
+	return processStage(out, done)
 }
 
 func processStage(in, done In) Out {
