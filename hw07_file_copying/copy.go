@@ -1,18 +1,18 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"github.com/cheggaaa/pb/v3"
 	"io"
-	"log"
 	"os"
 )
 
 var (
 	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
+	ErrNegativeOffsetSize    = errors.New("offset negative")
+	ErrNegativeLimit         = errors.New("limit negative")
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
@@ -21,7 +21,6 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err != nil {
 		return err
 	}
-
 	if (fileInfo.Size() - offset) < limit {
 		limit = fileInfo.Size() - offset
 	}
@@ -30,8 +29,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err != nil {
 		return ErrUnsupportedFile
 	}
+	defer fromFile.Close()
 	//Проверяем что есть такое смещение
-	if _, err = fromFile.Seek(offset, 0); err != nil {
+	if _, err = fromFile.Seek(offset, io.SeekStart); err != nil {
 		return ErrOffsetExceedsFileSize
 	}
 	//Создаем файл куда копировать
@@ -43,50 +43,39 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err != nil {
 		return fmt.Errorf("failed about info To file: %s", toPath)
 	}
+	//Закрываем всегда при выходе
+	defer toFile.Close()
 	if toFileInfo.IsDir() {
 		return ErrUnsupportedFile
 	}
-
-	//Закрываем всегда при выходе
-	defer func(fromFile *os.File, toFile *os.File) {
-		errFrom := fromFile.Close()
-		if errFrom != nil {
-			log.Panicf("error %s file close : %v", fromPath, err)
-		}
-		errTo := toFile.Close()
-		if errTo != nil {
-			log.Panicf("error %s file close : %v", toPath, err)
-		}
-	}(fromFile, toFile)
-
 	//Копируем
-	buf := bufio.NewReaderSize(fromFile, int(fileInfo.Size()))
 	bar := pb.Full.Start64(limit)
-	barReader := bar.NewProxyReader(buf)
-	_, err = io.CopyN(toFile, barReader, limit)
+	defer bar.Finish()
+	barReader := bar.NewProxyReader(fromFile)
+	test, err := io.CopyN(toFile, barReader, limit)
+	println(test)
 	if err != nil {
-		return fmt.Errorf("failed about info To file: %s", toPath)
+		return err
 	}
-	bar.Finish()
 	return nil
 }
 
 func validate(fromPath string, offset, limit int64) (os.FileInfo, error) {
 	if offset < 0 {
-		return nil, ErrUnsupportedFile
+		return nil, ErrNegativeOffsetSize
 	}
 	if limit < 0 {
-		return nil, fmt.Errorf("Limit < 0")
+		return nil, ErrNegativeLimit
 	}
 	fromFileInfo, err := os.Stat(fromPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed about info From file: %s", fromPath)
+		return nil, ErrUnsupportedFile
 	}
-	if fromFileInfo.IsDir() {
-		return nil, fmt.Errorf("File is dir: %s", fromPath)
+	if fromFileInfo.IsDir() || fromFileInfo.Size() < offset {
+		return nil, ErrUnsupportedFile
 	}
-	if fromFileInfo.Size() < offset {
-		return nil, fmt.Errorf("File from %s size %s < offset", fromFileInfo.Size(), fromPath)
+	if fromFileInfo.Size() == 0 {
+		return nil, ErrUnsupportedFile
 	}
 	return fromFileInfo, nil
 }
