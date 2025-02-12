@@ -24,6 +24,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if (fileInfo.Size() - offset) < limit {
 		limit = fileInfo.Size() - offset
 	}
+	if limit == 0 && offset == 0 {
+		limit = fileInfo.Size()
+	}
 	//Открываем файл
 	fromFile, err := os.OpenFile(fromPath, os.O_RDONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
@@ -52,8 +55,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	bar := pb.Full.Start64(limit)
 	defer bar.Finish()
 	barReader := bar.NewProxyReader(fromFile)
-	test, err := io.CopyN(toFile, barReader, limit)
-	println(test)
+	_, err = io.CopyN(toFile, barReader, limit)
 	if err != nil {
 		return err
 	}
