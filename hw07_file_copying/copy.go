@@ -26,7 +26,12 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 	toFileInfo, err := os.Stat(toPath)
 	if err != nil {
-		return err
+		if !os.IsNotExist(err) {
+			return err
+		}
+	}
+	if os.SameFile(fileInfo, toFileInfo) {
+		return ErrFromFileEqualToFile
 	}
 	if (fileInfo.Size() - offset) < limit {
 		limit = fileInfo.Size() - offset
@@ -38,9 +43,6 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	fromFile, err := os.OpenFile(fromPath, os.O_RDONLY|os.O_APPEND|os.O_CREATE, 0o644)
 	if err != nil {
 		return err
-	}
-	if os.SameFile(fileInfo, toFileInfo) {
-		return ErrFromFileEqualToFile
 	}
 	defer fromFile.Close()
 	// Проверяем что есть такое смещение
