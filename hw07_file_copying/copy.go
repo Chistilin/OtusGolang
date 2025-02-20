@@ -11,6 +11,7 @@ import (
 
 var (
 	ErrFromFileEqualToFile   = errors.New("from file path equal to file path")
+	ErrFromFileIsDir         = errors.New("error to file is dir")
 	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 	ErrNegativeOffsetSize    = errors.New("offset negative")
@@ -35,27 +36,20 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	// Открываем файл
 	fromFile, err := os.OpenFile(fromPath, os.O_RDONLY|os.O_APPEND|os.O_CREATE, 0o644)
 	if err != nil {
-		return ErrUnsupportedFile
+		return err
 	}
 	defer fromFile.Close()
 	// Проверяем что есть такое смещение
 	if _, err = fromFile.Seek(offset, io.SeekStart); err != nil {
-		return ErrOffsetExceedsFileSize
+		return err
 	}
 	// Создаем файл куда копировать
 	toFile, err := os.Create(toPath)
 	if err != nil {
 		return fmt.Errorf("error %s file create : %w", toPath, err)
 	}
-	toFileInfo, err := toFile.Stat()
-	if err != nil {
-		return fmt.Errorf("failed about info To file: %s", toPath)
-	}
 	// Закрываем всегда при выходе
 	defer toFile.Close()
-	if toFileInfo.IsDir() {
-		return ErrUnsupportedFile
-	}
 	// Копируем
 	bar := pb.Full.Start64(limit)
 	defer bar.Finish()
@@ -83,8 +77,12 @@ func validate(fromPath string, offset, limit int64) (os.FileInfo, error) {
 	if !fromFileInfo.Mode().IsRegular() {
 		return nil, ErrUnsupportedFile
 	}
-	if fromFileInfo.IsDir() || fromFileInfo.Size() < offset {
-		return nil, ErrUnsupportedFile
+	if fromFileInfo.IsDir() {
+		return nil, ErrFromFileIsDir
+	}
+
+	if fromFileInfo.Size() < offset {
+		return nil, ErrOffsetExceedsFileSize
 	}
 	return fromFileInfo, nil
 }
