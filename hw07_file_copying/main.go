@@ -21,6 +21,6 @@ func main() {
 	flag.Parse()
 	result := Copy(from, to, offset, limit)
 	if result != nil {
-		log.Fatal()
+		log.Fatal(result)
 	}
 }

@@ -77,4 +77,10 @@ func TestCopy(t *testing.T) {
 
 		require.Equal(t, ErrUnsupportedFile, err)
 	})
+
+	t.Run("From File To File Path Equal", func(t *testing.T) {
+		err := Copy(input, input, 0, 0)
+
+		require.Equal(t, ErrFromFileEqualToFile, err)
+	})
 }

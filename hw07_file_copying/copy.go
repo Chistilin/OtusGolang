@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	ErrFromFileEqualToFile   = errors.New("From File Path Equal To File Path")
 	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 	ErrNegativeOffsetSize    = errors.New("offset negative")
@@ -21,6 +22,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	fileInfo, err := validate(fromPath, offset, limit)
 	if err != nil {
 		return err
+	}
+	if fromPath == toPath {
+		return ErrFromFileEqualToFile
 	}
 	if (fileInfo.Size() - offset) < limit {
 		limit = fileInfo.Size() - offset
@@ -58,6 +62,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	barReader := bar.NewProxyReader(fromFile)
 	_, err = io.CopyN(toFile, barReader, limit)
 	if err != nil {
+		os.Remove(toPath)
 		return err
 	}
 	return nil
@@ -72,12 +77,13 @@ func validate(fromPath string, offset, limit int64) (os.FileInfo, error) {
 	}
 	fromFileInfo, err := os.Stat(fromPath)
 	if err != nil {
+		return nil, err
+	}
+	// Проверяем что это обычный файл
+	if !fromFileInfo.Mode().IsRegular() {
 		return nil, ErrUnsupportedFile
 	}
 	if fromFileInfo.IsDir() || fromFileInfo.Size() < offset {
-		return nil, ErrUnsupportedFile
-	}
-	if fromFileInfo.Size() == 0 {
 		return nil, ErrUnsupportedFile
 	}
 	return fromFileInfo, nil
