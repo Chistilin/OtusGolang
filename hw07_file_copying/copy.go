@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrFromFileEqualToFile   = errors.New("From File Path Equal To File Path")
+	ErrFromFileEqualToFile   = errors.New("from file path equal to file path")
 	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 	ErrNegativeOffsetSize    = errors.New("offset negative")
